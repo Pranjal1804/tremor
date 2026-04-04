@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EdgeTremor | Clinical Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+:root {
+    --bg: #020617;
+    /* Deep elegant slate/black */
+    --panel-bg: rgba(15, 23, 42, 0.6);
+    --panel-border: rgba(52, 211, 153, 0.15);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+
+    /* The New Lighter Green Theme */
+    --accent: #34d399;
+    --accent-light: #6ee7b7;
+    --accent-gradient: linear-gradient(135deg, #6ee7b7 0%, #34d399 50%, #059669 100%);
+    --accent-glow: rgba(52, 211, 153, 0.35);
+
+    --success: #10b981;
+    --danger: #f43f5e;
+    --danger-glow: rgba(244, 63, 94, 0.4);
+
+    --x-color: #34d399;
+    --y-color: #fbbf24;
+    --z-color: #cbd5e1;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--text-primary);
+    overflow: hidden;
+    height: 100vh;
+}
+
+/* Background Animations */
+.glow-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    z-index: -2;
+    opacity: 0.35;
+}
+
+.orb-1 {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 60%);
+    top: -200px;
+    left: -200px;
+}
+
+.orb-2 {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, #38bdf8 0%, transparent 60%);
+    /* Tiny dash of cyan for contrast */
+    bottom: -150px;
+    right: -100px;
+}
+
+.grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(to right, rgba(52, 211, 153, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(52, 211, 153, 0.04) 1px, transparent 1px);
+    background-size: 50px 50px;
+    z-index: -1;
+}
+
+/* Layout */
+.app-layout {
+    display: flex;
+    height: 100vh;
+}
+
+.sidebar {
+    width: 250px;
+    background: rgba(4, 9, 20, 0.85);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 1.5rem;
+    z-index: 10;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 3rem;
+}
+
+.logo-icon {
+    background: var(--accent-gradient);
+    color: #000;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 15px var(--accent-glow);
+}
+
+.sidebar-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex-grow: 1;
+}
+
+.nav-item {
+    text-decoration: none;
+    color: var(--text-secondary);
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.nav-item:hover,
+.nav-item.active {
+    background: rgba(52, 211, 153, 0.1);
+    color: var(--text-primary);
+    border-color: rgba(52, 211, 153, 0.2);
+}
+
+.nav-item.active i {
+    color: var(--accent);
+    text-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* Device Connection Box */
+.device-box {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-top: auto;
+    position: relative;
+    overflow: hidden;
+}
+
+.device-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--danger);
+}
+
+.status-dot.active {
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+}
+
+.device-info {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #fff;
+}
+
+.connect-btn {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent-gradient);
+    color: #020617;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px var(--accent-glow);
+}
+
+.connect-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--accent-glow);
+}
+
+.connect-btn.connected {
+    background: rgba(244, 63, 94, 0.15);
+    border: 1px solid rgba(244, 63, 94, 0.4);
+    color: var(--danger);
+    box-shadow: none;
+}
+
+.connect-btn.connected:hover {
+    background: var(--danger);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(244, 63, 94, 0.3);
+}
+
+/* Main Content */
+.main-content {
+    flex-grow: 1;
+    padding: 2rem 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow-y: auto;
+}
+
+.top-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.header-titles h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+}
+
+.header-titles p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-top: 4px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.date-chip {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--panel-border);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(5px);
+}
+
+.profile-pic {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--accent-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #020617;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 15px var(--accent-glow);
+}
+
+/* Glass Panels */
+.glass-panel {
+    background: var(--panel-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    position: relative;
+}
+
+.glass-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(52, 211, 153, 0.3), transparent);
+    border-radius: 16px 16px 0 0;
+}
+
+.glass-panel:hover {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    border-color: rgba(52, 211, 153, 0.2);
+    transform: translateY(-2px);
+}
+
+/* KPI Grid */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+}
+
+.kpi-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.15), rgba(5, 150, 105, 0.1));
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    border: 1px solid rgba(52, 211, 153, 0.2);
+    box-shadow: inset 0 0 10px rgba(52, 211, 153, 0.05);
+}
+
+.alert-icon {
+    background: rgba(244, 63, 94, 0.1);
+    color: var(--danger);
+    border-color: rgba(244, 63, 94, 0.2);
+}
+
+.kpi-data {
+    display: flex;
+    flex-direction: column;
+}
+
+.kpi-label {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.kpi-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+.unit {
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* State Card Anim */
+#state-card {
+    transition: all 0.3s ease;
+}
+
+.state-freeze {
+    background: rgba(244, 63, 94, 0.1) !important;
+    border-color: rgba(244, 63, 94, 0.4) !important;
+    animation: flashDanger 0.8s infinite alternate !important;
+}
+
+.state-freeze .kpi-icon {
+    background: var(--danger) !important;
+    color: #fff !important;
+    box-shadow: 0 0 20px var(--danger);
+    border: none;
+}
+
+.state-freeze .kpi-value,
+.state-freeze .kpi-label {
+    color: var(--danger) !important;
+    text-shadow: 0 0 10px rgba(244, 63, 94, 0.5) !important;
+}
+
+@keyframes flashDanger {
+    0% {
+        box-shadow: 0 0 15px rgba(244, 63, 94, 0.1);
+    }
+
+    100% {
+        box-shadow: 0 0 30px rgba(244, 63, 94, 0.4);
+    }
+}
+
+/* Central Content */
+.content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+    flex-grow: 1;
+    min-height: 400px;
+}
+
+/* Main Chart */
+.chart-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.panel-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.panel-header h3 i {
+    color: var(--accent);
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.chart-legend {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #fff;
+    font-weight: 500;
+}
+
+.legend-item::before {
+    content: '';
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.x-axis {
+    color: var(--x-color);
+}
+
+.y-axis {
+    color: var(--y-color);
+}
+
+.z-axis {
+    color: var(--z-color);
+}
+
+.x-axis::before {
+    background: var(--x-color);
+    box-shadow: 0 0 8px var(--x-color);
+}
+
+.y-axis::before {
+    background: var(--y-color);
+    box-shadow: 0 0 8px var(--y-color);
+}
+
+.z-axis::before {
+    background: var(--z-color);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+.canvas-wrapper {
+    flex-grow: 1;
+    position: relative;
+    width: 100%;
+}
+
+/* Side Panels */
+.side-panels {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ML Gauge */
+.gauge-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.gauge-container {
+    width: 150px;
+    height: 150px;
+    margin: 1rem 0;
+}
+
+.circular-chart {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    max-height: 250px;
+}
+
+.circle-bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.05);
+    stroke-width: 3.8;
+}
+
+.circle {
+    fill: none;
+    stroke-width: 2.8;
+    stroke-linecap: round;
+    transition: stroke-dasharray 0.3s ease, stroke 0.3s ease;
+}
+
+.circle.safe {
+    stroke: var(--accent);
+    filter: drop-shadow(0 0 5px var(--accent));
+}
+
+.circle.warning {
+    stroke: #fbbf24;
+    filter: drop-shadow(0 0 5px #fbbf24);
+}
+
+.circle.danger {
+    stroke: var(--danger);
+    filter: drop-shadow(0 0 8px var(--danger));
+}
+
+.percentage {
+    fill: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    text-anchor: middle;
+}
+
+/* Events Panel */
+.events-panel {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.event-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    max-height: 250px;
+}
+
+.event-feed::-webkit-scrollbar {
+    width: 4px;
+}
+
+.event-feed::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 4px;
+}
+
+.event-item {
+    display: flex;
+    gap: 1rem;
+    padding: 0.85rem;
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.4);
+    font-size: 0.85rem;
+    border-left: 3px solid transparent;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.event-item.system {
+    border-left-color: var(--text-secondary);
+}
+
+.event-item.ml-log {
+    border-left-color: var(--accent);
+    background: linear-gradient(90deg, rgba(52, 211, 153, 0.1), transparent);
+}
+
+.event-item.alert {
+    border-left-color: var(--danger);
+    background: linear-gradient(90deg, rgba(244, 63, 94, 0.15), transparent);
+}
+
+.event-time {
+    color: var(--accent-light);
+    min-width: 65px;
+    font-family: monospace;
+    font-weight: 600;
+}
+
+.event-msg {
+    color: var(--text-primary);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+    <!-- Background Elements -->
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="grid-overlay"></div>
+
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-icon"><i class="ri-pulse-line"></i></div>
+                <h2>EdgeTremor</h2>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active"><i class="ri-dashboard-line"></i> Dashboard</a>
+                <a href="#" class="nav-item"><i class="ri-user-line"></i> Patient Profile</a>
+                <a href="#" class="nav-item"><i class="ri-history-line"></i> Session Logs</a>
+                <a href="#" class="nav-item"><i class="ri-settings-4-line"></i> Settings</a>
+            </nav>
+
+            <div class="device-box">
+                <div class="device-status">
+                    <div class="status-dot" id="bt-dot"></div>
+                    <span id="bt-text">Disconnected</span>
+                </div>
+                <div class="device-info">ESP32-S3 Ankle IMU</div>
+                <div class="pb-bar">
+                    <div class="pb-fill" id="battery-fill" style="width: 0%;"></div>
+                </div>
+                <button id="connectBtn" class="connect-btn">
+                    <span class="btn-text">Connect Device</span>
+                    <i class="ri-bluetooth-connect-line"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Dashboard Area -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-titles">
+                    <h1>Real-Time Monitoring</h1>
+                    <p>Live kinematic data stream from Edge AI device.</p>
+                </div>
+                <div class="header-actions">
+                    <div class="date-chip"><i class="ri-calendar-line"></i> <span id="current-date"></span></div>
+                    <div class="profile-pic">P</div>
+                </div>
+            </header>
+
+            <!-- 4 Top KPI Cards -->
+            <div class="kpi-grid">
+                <!-- Status Card -->
+                <div class="glass-panel kpi-card" id="state-card">
+                    <div class="kpi-icon"><i class="ri-walk-line"></i></div>
+                    <div class="kpi-data">
+                        <p class="kpi-label">Current State</p>
+                        <h3 class="kpi-value" id="current-state">Normal</h3>
+                    </div>
+                    <div class="state-ripple" id="state-ripple"></div>
+                </div>
+
+                <!-- Tremor Band Power -->
+                <div class="glass-panel kpi-card">
+                    <div class="kpi-icon"><i class="ri-bar-chart-2-line"></i></div>
+                    <div class="kpi-data">
+                        <p class="kpi-label">Tremor Power (4-8Hz)</p>
+                        <h3 class="kpi-value"><span id="tremor-val">0.0</span> <span class="unit">Hz</span></h3>
+                    </div>
+                </div>
+
+                <!-- Gait Speed / Variance -->
+                <div class="glass-panel kpi-card">
+                    <div class="kpi-icon"><i class="ri-node-tree"></i></div>
+                    <div class="kpi-data">
+                        <p class="kpi-label">ZCR (Leg Activity)</p>
+                        <h3 class="kpi-value"><span id="zcr-val">0.0</span> <span class="unit">cross/s</span></h3>
+                    </div>
+                </div>
+
+                <!-- Freeze Counter -->
+                <div class="glass-panel kpi-card">
+                    <div class="kpi-icon alert-icon"><i class="ri-error-warning-line"></i></div>
+                    <div class="kpi-data">
+                        <p class="kpi-label">Total FOG Episodes</p>
+                        <h3 class="kpi-value" id="fog-count">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Central Content Grid -->
+            <div class="content-grid">
+                <!-- Main Chart -->
+                <div class="glass-panel chart-panel">
+                    <div class="panel-header">
+                        <h3><i class="ri-funds-line"></i> Instantaneous Acceleration (3-Axis)</h3>
+                        <div class="chart-legend">
+                            <span class="legend-item x-axis">X</span>
+                            <span class="legend-item y-axis">Y</span>
+                            <span class="legend-item z-axis">Z</span>
+                        </div>
+                    </div>
+                    <div class="canvas-wrapper">
+                        <canvas id="accelChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Event Feed & Secondary Model -->
+                <div class="side-panels">
+                    <!-- ML Confidence -->
+                    <div class="glass-panel gauge-panel">
+                        <div class="panel-header">
+                            <h3><i class="ri-brain-line"></i> ML Fog Probability</h3>
+                        </div>
+                        <div class="gauge-container">
+                            <svg class="circular-chart" viewBox="0 0 36 36">
+                                <path class="circle-bg"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path class="circle" id="prob-circle" stroke-dasharray="0, 100"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <text x="18" y="20.5" class="percentage" id="prob-text">0%</text>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Event Log -->
+                    <div class="glass-panel events-panel">
+                        <div class="panel-header">
+                            <h3><i class="ri-list-check-2"></i> Inference Log</h3>
+                        </div>
+                        <div class="event-feed" id="event-feed">
+                            <div class="event-item system">
+                                <div class="event-time">--:--:--</div>
+                                <div class="event-msg">Awaiting Connection...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+// DOM & UI Elements
+const connectBtn = document.getElementById('connectBtn');
+const btText = document.getElementById('bt-text');
+const btDot = document.getElementById('bt-dot');
+const batteryFill = document.getElementById('battery-fill');
+const dateText = document.getElementById('current-date');
+
+// KPIs
+const stateCard = document.getElementById('state-card');
+const currentState = document.getElementById('current-state');
+const tremorVal = document.getElementById('tremor-val');
+const zcrVal = document.getElementById('zcr-val');
+const fogCount = document.getElementById('fog-count');
+
+// ML Predictor
+const probCircle = document.getElementById('prob-circle');
+const probText = document.getElementById('prob-text');
+const eventFeed = document.getElementById('event-feed');
+
+// Set Date
+dateText.innerText = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+// Setup Main Chart
+const ctx = document.getElementById('accelChart').getContext('2d');
+
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.font.family = 'Inter';
+
+// Create a gradient under the line
+const gradientX = ctx.createLinearGradient(0, 0, 0, 400);
+gradientX.addColorStop(0, 'rgba(52, 211, 153, 0.25)'); // #34d399
+gradientX.addColorStop(1, 'rgba(52, 211, 153, 0)');
+
+const accelChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: Array(50).fill(''),
+        datasets: [
+            { label: 'Ankle X', borderColor: '#34d399', backgroundColor: gradientX, borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true, data: Array(50).fill(0) },
+            { label: 'Ankle Y', borderColor: '#fbbf24', borderWidth: 2, pointRadius: 0, tension: 0.4, fill: false, data: Array(50).fill(0) },
+            { label: 'Ankle Z', borderColor: '#cbd5e1', borderWidth: 2, pointRadius: 0, tension: 0.4, fill: false, data: Array(50).fill(0) }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 150 },
+        interaction: { intersect: false, mode: 'index' },
+        scales: {
+            y: {
+                min: -3, max: 3,
+                grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
+                ticks: { padding: 10 }
+            },
+            x: { grid: { display: false }, ticks: { display: false } }
+        },
+        plugins: {
+            legend: { display: false }, // Custom legend handled in HTML
+            tooltip: { enabled: false }
+        }
+    }
+});
+
+function appendLog(msg, type = "system") {
+    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+    const template = `
+        <div class="event-item ${type}">
+            <div class="event-time">${time}</div>
+            <div class="event-msg">${msg}</div>
+        </div>
+    `;
+    eventFeed.insertAdjacentHTML('afterbegin', template);
+    // Keep max 6 logs
+    if (eventFeed.children.length > 7) {
+        eventFeed.lastElementChild.remove();
+    }
+}
+
+// ── SIMULATION ENGINE ──
+let isConnected = false;
+let simInterval = null;
+let totalFogs = 0;
+let consecutiveFogs = 0;
+let isRecovering = false;
+let timeStep = 0;
+
+function updateGauge(prob) {
+    const dash = (prob / 100) * 100; // Stroke-dasharray is 100 total
+    probCircle.setAttribute('stroke-dasharray', `${dash}, 100`);
+    probText.textContent = `${prob.toFixed(0)}%`;
+
+    // Color thresholds matching our exact Random Forest probabilities
+    probCircle.className.baseVal = "circle";
+    if (prob < 40) probCircle.classList.add('safe');
+    else if (prob < 60) probCircle.classList.add('warning');
+    else probCircle.classList.add('danger');
+}
+
+function startDataStream() {
+    let internalClock = 0;
+
+    simInterval = setInterval(() => {
+        internalClock += 0.1;
+
+        // 1. Simulate Freezing physics logic
+        // Freeze occurs randomly, or resolves after a few seconds
+        const rollFOG = Math.random();
+        let isFreezingFrame = false;
+
+        if (!isRecovering && rollFOG > 0.95) {
+            consecutiveFogs++;
+        } else if (consecutiveFogs > 0) {
+            consecutiveFogs++;
+            if (consecutiveFogs > 15) { // Stop freeze after ~3 seconds
+                consecutiveFogs = 0;
+                isRecovering = true;
+                setTimeout(() => isRecovering = false, 4000); // 4 sec safe period
+            }
+        }
+
+        // 2. Generate Data based on State
+        let targetX, targetY, targetZ;
+        let tremorHz, zcrCount, mlProb;
+
+        if (consecutiveFogs > 0) {
+            // FOG STATE (High frequency tremor, low forward movement)
+            isFreezingFrame = true;
+            targetX = Math.sin(internalClock * 15) * 1.5 + (Math.random() * 0.5); // Leg shaking
+            targetY = Math.sin(internalClock * 16) * 1.2 + (Math.random() * 0.5);
+            targetZ = Math.cos(internalClock * 15) * 1.0;
+            tremorHz = (4.5 + Math.random() * 3).toFixed(1); // 4-8Hz
+            zcrCount = Math.floor(25 + Math.random() * 10);
+            mlProb = Math.min(99, 65 + (consecutiveFogs * 2)); // Confidence rises
+        } else {
+            // NORMAL WALK (Low frequency, smooth sine waves)
+            targetX = Math.sin(internalClock * 3) * 0.8;
+            targetY = Math.cos(internalClock * 3) * 0.5;
+            targetZ = Math.sin(internalClock * 6) * 0.3;
+            tremorHz = (1.2 + Math.random() * 1).toFixed(1); // 1-2Hz
+            zcrCount = Math.floor(5 + Math.random() * 4);
+            mlProb = Math.max(0, 15 - Math.random() * 10);
+        }
+
+        // 3. Update Chart
+        accelChart.data.datasets[0].data.shift(); accelChart.data.datasets[0].data.push(targetX);
+        accelChart.data.datasets[1].data.shift(); accelChart.data.datasets[1].data.push(targetY);
+        accelChart.data.datasets[2].data.shift(); accelChart.data.datasets[2].data.push(targetZ);
+        accelChart.update();
+
+        // 4. Update KPIs
+        tremorVal.innerText = tremorHz;
+        zcrVal.innerText = zcrCount;
+        updateGauge(mlProb);
+
+        // 5. ML Decision Logic (Hardware Debouncing logic implemented!)
+        // Two consecutive frames > 60% confidence triggers the alarm
+        if (isFreezingFrame && consecutiveFogs === 2) {
+            stateCard.classList.add('state-freeze');
+            currentState.innerText = "FREEZE (FOG)";
+
+            totalFogs++;
+            fogCount.innerText = totalFogs;
+            appendLog(`Tremor Spiked! FOG onset at ${tremorHz}Hz`, "alert");
+        } else if (!isFreezingFrame && stateCard.classList.contains('state-freeze')) {
+            stateCard.classList.remove('state-freeze');
+            currentState.innerText = "Normal";
+            appendLog("Normal gait restored. ML Confidence < 40%", "ml-log");
+        }
+
+    }, 200); // 5fps UI update to match the sliding window steps
+}
+
+connectBtn.addEventListener('click', () => {
+    if (!isConnected) {
+        // Connect
+        isConnected = true;
+        connectBtn.classList.add('connected');
+        connectBtn.innerHTML = `<span class="btn-text">Disconnect Base</span><i class="ri-bluetooth-line"></i>`;
+
+        btText.innerText = "Connected";
+        btText.style.color = "var(--success)";
+        btDot.classList.add("active");
+
+        batteryFill.style.width = "85%";
+        batteryFill.style.background = "var(--success)";
+
+        appendLog("BLE GATT Connection established.", "system");
+        appendLog("Calibrating 25-Tree TinyML Model...", "ml-log");
+
+        setTimeout(() => {
+            appendLog("Inference started on ESP32.", "system");
+            startDataStream();
+        }, 1500);
+
+    } else {
+        // Disconnect
+        isConnected = false;
+        connectBtn.classList.remove('connected');
+        connectBtn.innerHTML = `<span class="btn-text">Connect Device</span><i class="ri-bluetooth-connect-line"></i>`;
+
+        btText.innerText = "Disconnected";
+        btText.style.color = "var(--text-secondary)";
+        btDot.classList.remove("active");
+        batteryFill.style.width = "0%";
+
+        clearInterval(simInterval);
+        appendLog("BLE Connection terminated by user.", "system");
+
+        // Reset Gauge
+        updateGauge(0);
+        tremorVal.innerText = "0.0";
+        zcrVal.innerText = "0.0";
+        stateCard.classList.remove('state-freeze');
+        currentState.innerText = "Standby";
+
+        // Reset Chart
+        accelChart.data.datasets.forEach(ds => ds.data = Array(50).fill(0));
+        accelChart.update();
+    }
+});
+
+</script>
+</body>
+
+</html>
